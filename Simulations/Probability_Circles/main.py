@@ -7,6 +7,8 @@ import random
 from functions import * 
 from shapely.geometry import Point
 from shapely.geometry.polygon import Polygon
+from TSP import tsp
+from matplotlib.lines import Line2D
 
 global side_length
 side_length = 32/2 #km 
@@ -143,27 +145,46 @@ class Astronaut:
             color_astro = 'g'
         else: 
             color_astro = 'k'
-        ax.scatter(self.position[0], self.position[1], marker="^", c=color_astro, s=10, zorder=7, label='Astonaut')
+        ax.scatter(self.position[0], self.position[1], marker="^", c=color_astro, s=20, zorder=7, label='Astonaut')
         ax.arrow(self.position[0], self.position[1], self.velocity[0], self.velocity[1], color='b', label='velocity', zorder=8)
         ax.arrow(self.position[0], self.position[1], self.acceleration[0], self.acceleration[1], color='r', label='acceleration', zorder=9)
 
 
-tst = SAVER(initial_velocity = (11, -1.2), initial_acceleration=(1,5))
+svr = SAVER(initial_velocity = (11, -1.2), initial_acceleration=(1,5))
 num_astronauts = 4
 lst_astronauts = [Astronaut() for i in range(0, num_astronauts)]
-tst.print_properties()
+svr.print_properties()
 
-tst.update_velocity(-1, 1)
-tst.update_position(-1, 1)
+svr.update_velocity(-1, 1)
+svr.update_position(-1, 1)
 fig, ax = plt.subplots()
 for astronaut in lst_astronauts:
     astronaut.print_properties()
-    astronaut.plot_astronaut(ax, tst)
+    astronaut.plot_astronaut(ax, svr)
 
+#Beginning of travelling salesman
+node_list = [astronaut.position for astronaut in lst_astronauts]
+node_list.insert(0, svr.position)
+print(node_list)
+tsp_idx, distance = tsp(node_list)
+tsp_idx.pop(-1)
+
+node_list_x, node_list_y = zip(*node_list)
 ax.set_xlabel('km')
 ax.set_ylabel('km')
+ax.plot(node_list_x, node_list_y, linestyle="--", linewidth=3, color='m')
 ax.set_xlim([-1*side_length, side_length])
 ax.set_ylim([-1*side_length, side_length])
 ax.grid()
-tst.plot_SAVER(ax)
+svr.plot_SAVER(ax)
+
+custom_lbls = [Line2D([0], [0], color='r', lw=4, alpha=1),
+                Line2D([0], [0], color='b', lw=4, alpha=1),
+               Line2D([], [], color='m', lw=3, linestyle='--'),
+              Line2D([], [], color='g', linestyle="None", marker="*", lw=3),
+              Line2D([], [], color='k', linestyle="None", marker="^", lw=3),
+              Line2D([], [], color='g', linestyle="None", marker="^", lw=3)]
+
+ax.legend(custom_lbls, ['Acceleration', 'Velocity', 'Path', 'SAVER', 'Astronaut out of FOV', 'Astronaut in FOV' ], loc='upper left')
+
 plt.show()
